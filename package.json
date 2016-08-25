@@ -42,6 +42,12 @@
         2,
         "single"
       ]
-    }
+    },
+    "plugins": [
+  "react"
+]
+  },
+  "dependencies": {
+    "eslint-plugin-react": "^6.1.2"
   }
 }
