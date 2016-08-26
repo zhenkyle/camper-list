@@ -1,29 +1,69 @@
 function Sorter(props) {
   var name;
-  if (props.type==="recent")
+  if (props.filter==="recent")
     name = "Points in past 30 days"
-  if (props.type==="all")
+  if (props.filter==="all")
       name = "All time points"
-  if (props.active==="true")
+  if (props.active===true)
     return <strong>{name}▼</strong>;
   else
-    return <a href="#"><strong>{name}</strong></a>;
+    return (
+    <a href="#" onClick={e => {
+      e.preventDefault();
+      props.onClick(props.filter);
+    }} ><strong>{name}</strong></a>
+    )
 }
+/*
+Sorter.propTypes = {
+  active: PropTypes.bool.isRequired,
+  filter: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired
+};
+*/
 
 var CamperViewer = React.createClass({
   getInitialState: function() {
-    return { data: [{"username":"ndburrus","img":"https://avatars.githubusercontent.com/u/15148847?v=3","alltime":1598,"recent":742,"lastUpdate":"2016-08-25T03:30:58.472Z"},{"username":"sjames1958gm","img":"https://avatars.githubusercontent.com/u/4639625?v=3","alltime":2515,"recent":693,"lastUpdate":"2016-08-25T03:30:53.262Z"},{"username":"coffeebeanzz","img":"https://avatars.githubusercontent.com/u/19631203?v=3","alltime":725,"recent":289,"lastUpdate":"2016-08-25T03:23:10.786Z"}] };
+    return { data: {
+      "recent": [],
+      "all": []
+      },
+      filter: "recent",
+    };
+  },
+
+  componentDidMount: function() {
+    var data={};
+    this.serverRequest = $.get("https://fcctop100.herokuapp.com/api/fccusers/top/recent", function (result) {
+      data["recent"] = result;
+
+      this.serverRequest = $.get("https://fcctop100.herokuapp.com/api/fccusers/top/alltime", function (result) {
+        data["all"] = result;
+        this.setState({
+          data: data
+        });
+      }.bind(this));
+
+    }.bind(this));
+  },
+
+  componentWillUnmount: function() {
+    this.serverRequest.abort();
+  },
+
+  handleClick: function(filter) {
+    this.setState({filter});
   },
 
   render: function() {
-    var detailRows = this.state.data.map(function(props,i) {
+    var detailRows = this.state.data[this.state.filter].map(function(props,i) {
       return (
-        <tr>
+        <tr key={i}>
             <td>
                 {i+1}
             </td>
             <td>
-                <a href={"https://www.freecodecamp.com/" +props.username}><img src={props.img} alt="" className="img-rounded" />{props.username}</a>
+                <a href={"https://www.freecodecamp.com/" +props.username} target="_blank"><img src={props.img} alt="" className="img-rounded" />{props.username}</a>
             </td>
             <td className="text-center">
                 {props.recent}
@@ -50,10 +90,10 @@ var CamperViewer = React.createClass({
               <strong>Camper Name</strong>
             </td>
             <td className="text-center">
-              <Sorter active="true" type="recent"/>
+              <Sorter active={this.state.filter === "recent"} filter="recent" onClick={this.handleClick} />
             </td>
             <td className="text-center">
-              <a href="#"><strong>All time points</strong></a>
+              <Sorter active={this.state.filter === "all"} filter="all" onClick={this.handleClick} />
             </td>
           </tr>
         </thead>
